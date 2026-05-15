@@ -1,8 +1,11 @@
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Depends
 from pydantic import BaseModel
 from app.services.cart_service import CartService
+from app.security import verify_api_key
 
-router = APIRouter(prefix="/api/cart", tags=["cart"])
+router = APIRouter( prefix="/api/cart", 
+                    tags=["cart"] ,
+                    dependencies=[Depends(verify_api_key)])
 cart_service = CartService()
 
 
