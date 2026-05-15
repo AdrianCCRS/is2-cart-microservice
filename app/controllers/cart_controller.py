@@ -1,3 +1,4 @@
+from typing import Optional
 from fastapi import APIRouter, HTTPException, Depends
 from pydantic import BaseModel
 from app.services.cart_service import CartService
@@ -37,9 +38,9 @@ async def get_cart_ttl(user_id: str):
 
 
 @router.get("/{user_id}")
-async def get_cart(user_id: str):
+async def get_cart(user_id: str, page: int = 1, page_size: Optional[int] = None):
     try:
-        result = await cart_service.get_cart(user_id)
+        result = await cart_service.get_cart(user_id, page=page, page_size=page_size)
         return result
     except ValueError:
         raise HTTPException(status_code=404, detail="Carrito no encontrado")

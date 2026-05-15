@@ -33,7 +33,12 @@ class CartService:
                 logger.error(f'unexpected error in add_item: user={user_id} err={str(e)}')
             raise
 
-    async def get_cart(self, user_id: str) -> dict:
+    async def get_cart(self, user_id: str, page: int = 1, page_size: int = None) -> dict:
+        """
+        Retorna el contenido del carrito con soporte de paginación opcional.
+        Si page_size es None, retorna todos los ítems (comportamiento original).
+        Lanza ValueError si el carrito no existe o está vacío.
+        """
         try:
             cart_data = await cart_repository.get_cart(user_id)
 
@@ -41,18 +46,44 @@ class CartService:
                 logger.info(f'get_cart: empty or not found for user={user_id}')
                 raise ValueError("Carrito no encontrado o vacío")
 
-            items = {
+            # Convertir todos los ítems
+            all_items = {
                 product_id: int(quantity)
                 for product_id, quantity in cart_data.items()
             }
+            total_items = len(all_items)
+            total_quantity = sum(all_items.values())
 
-            total_items = sum(items.values())
-            logger.info(f'get_cart ok: user={user_id} items={len(items)} total={total_items}')
+            # Aplicar paginación solo si se solicitó page_size
+            if page_size is not None:
+                if page < 1:
+                    raise ValueError("El número de página debe ser mayor a 0")
+                if page_size < 1:
+                    raise ValueError("El tamaño de página debe ser mayor a 0")
 
+                items_list = list(all_items.items())
+                start = (page - 1) * page_size
+                end = start + page_size
+                page_items = dict(items_list[start:end])
+                total_pages = -(-total_items // page_size)  # ceil division
+            else:
+                page_items = all_items
+                page = 1
+                page_size = total_items
+                total_pages = 1
+
+            logger.info(
+                f'get_cart ok: user={user_id} items={total_items} '
+                f'page={page} page_size={page_size}'
+            )
             return {
                 "user_id": user_id,
-                "items": items,
-                "total_items": total_items
+                "items": page_items,
+                "total_items": total_items,
+                "total_quantity": total_quantity,
+                "page": page,
+                "page_size": page_size,
+                "total_pages": total_pages
             }
         except Exception as e:
             if not isinstance(e, (ValueError, LookupError)):
