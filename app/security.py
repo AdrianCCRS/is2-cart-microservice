@@ -3,6 +3,15 @@ from fastapi import Security, HTTPException, status
 from fastapi.security import APIKeyHeader
 from app.logger import get_logger
 
+"""
+Módulo de seguridad del microservicio Cart.
+Provee dos mecanismos de seguridad:
+1. Autenticación por API Key mediante la cabecera HTTP X-API-Key.
+   La clave esperada se configura con la variable de entorno API_KEY.
+2. Validación del parámetro user_id para prevenir inyecciones y valores
+   maliciosos en las rutas de los endpoints.
+"""
+
 logger = get_logger(__name__)
 
 API_KEY_NAME = "X-API-Key"
