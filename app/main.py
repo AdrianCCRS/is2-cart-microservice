@@ -1,10 +1,17 @@
 from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
+from fastapi.middleware.cors import CORSMiddleware
 from app.redis_client import connect_redis, disconnect_redis, get_redis
 from app.controllers.cart_controller import router as cart_router
 
 app = FastAPI(title="Cart Microservice")
 
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 @app.exception_handler(ValueError)
 async def value_error_handler(request: Request, exc: ValueError):

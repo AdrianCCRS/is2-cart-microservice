@@ -1,20 +1,33 @@
-version: "3.9"
-
 services:
-  api:
-    build: .
-    container_name: cart_api
-    ports:
-      - "8000:8000"
-    volumes:
-      - .:/app  # Monta el código local para hot-reload
-    env_file:
-      - .env    # Variables de entorno locales
-    depends_on:
-      - redis
-
-  redis:
+  cart-redis:
     image: redis:7-alpine
     container_name: cart_redis
     ports:
-      - "6379:6379"
+      - "6380:6379"
+    networks:
+      - deploy_search-network
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: always
+
+  cart-api:
+    build: .
+    container_name: cart_api
+    ports:
+      - "8002:8000"
+    environment:
+      - REDIS_URL=redis://cart-redis:6379
+      - API_KEY=${CART_API_KEY:-dev-secret-key-local}
+    depends_on:
+      cart-redis:
+        condition: service_healthy
+    networks:
+      - deploy_search-network
+    restart: always
+
+networks:
+  deploy_search-network:
+    external: true
